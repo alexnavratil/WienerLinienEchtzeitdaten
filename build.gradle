@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+}
+
+group 'at.alexnavratil'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'de.siegmar:fastcsv:1.0.1'
+    compile 'com.squareup.okhttp3:okhttp:3.11.0'
+    compile 'com.jsoniter:jsoniter:0.9.23'
+
+}
