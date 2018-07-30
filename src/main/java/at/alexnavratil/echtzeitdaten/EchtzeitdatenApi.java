@@ -12,6 +12,7 @@ import okhttp3.Response;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -34,9 +35,9 @@ public class EchtzeitdatenApi {
     }
 
     public void readStaticData() throws IOException {
-        File linien = new File(getClass().getClassLoader().getResource("wienerlinien-ogd-linien.csv").getFile());
-        File haltestellen = new File(getClass().getClassLoader().getResource("wienerlinien-ogd-haltestellen.csv").getFile());
-        File steige = new File(getClass().getClassLoader().getResource("wienerlinien-ogd-steige.csv").getFile());
+        InputStreamReader linien = new InputStreamReader(getClass().getClassLoader().getResourceAsStream("wienerlinien-ogd-linien.csv"));
+        InputStreamReader haltestellen = new InputStreamReader(getClass().getClassLoader().getResourceAsStream("wienerlinien-ogd-haltestellen.csv"));
+        InputStreamReader steige = new InputStreamReader(getClass().getClassLoader().getResourceAsStream("wienerlinien-ogd-steige.csv"));
 
         CsvReader csvReader = new CsvReader();
         csvReader.setFieldSeparator(';');
@@ -45,7 +46,7 @@ public class EchtzeitdatenApi {
         /**
          * LINIEN
          */
-        CsvContainer csvLinien = csvReader.read(linien, StandardCharsets.UTF_8);
+        CsvContainer csvLinien = csvReader.read(linien);
         for (CsvRow row : csvLinien.getRows()) {
             final Linie l = new Linie(
                     Integer.parseInt(row.getField("LINIEN_ID")),
@@ -60,7 +61,7 @@ public class EchtzeitdatenApi {
         /**
          * STEIGE
          */
-        CsvContainer csvSteige = csvReader.read(steige, StandardCharsets.UTF_8);
+        CsvContainer csvSteige = csvReader.read(steige);
         for (CsvRow row : csvSteige.getRows()) {
             if(!row.getField("RBL_NUMMER").isEmpty()) {
                 final Steig s = new Steig(
@@ -85,7 +86,7 @@ public class EchtzeitdatenApi {
         /**
          * HALTESTELLEN
          */
-        CsvContainer csvHaltestellen = csvReader.read(haltestellen, StandardCharsets.UTF_8);
+        CsvContainer csvHaltestellen = csvReader.read(haltestellen);
         for (CsvRow row : csvHaltestellen.getRows()) {
             int haltestellenId = Integer.parseInt(row.getField("HALTESTELLEN_ID"));
             final Haltestelle h = new Haltestelle(
