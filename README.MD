@@ -1,5 +1,21 @@
+[![](https://jitpack.io/v/alexnavratil/WienerLinienEchtzeitdaten.svg)](https://jitpack.io/#alexnavratil/WienerLinienEchtzeitdaten)
+
 # Wiener Linien Echtzeitdaten Java API (Work In Progress)
 Datenquelle: Stadt Wien – data.wien.gv.at
+
+## Gradle
+```
+allprojects {
+    repositories {
+	    ...
+	    maven { url 'https://jitpack.io' }
+	}
+}
+
+dependencies {
+    implementation 'com.github.alexnavratil:WienerLinienEchtzeitdaten:v0.1'
+}
+```
 
 ## Example
 The following code lists the departure time in minutes from the station Palffygasse:
