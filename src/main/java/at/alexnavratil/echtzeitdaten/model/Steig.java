@@ -7,12 +7,16 @@ public class Steig {
     private final int haltestellenId;
     private final Linie linie;
     private final int rbl;
+    private final int reihenfolge;
+    private final Richtung richtung;
 
-    public Steig(int id, int haltestellenId, Linie linie, int rbl) {
+    public Steig(int id, int haltestellenId, Linie linie, int rbl, int reihenfolge, Richtung richtung) {
         this.id = id;
         this.haltestellenId = haltestellenId;
         this.linie = linie;
         this.rbl = rbl;
+        this.reihenfolge = reihenfolge;
+        this.richtung = richtung;
     }
 
     public int getId() {
@@ -29,6 +33,14 @@ public class Steig {
 
     public int getRbl() {
         return rbl;
+    }
+
+    public int getReihenfolge() {
+        return reihenfolge;
+    }
+
+    public Richtung getRichtung() {
+        return richtung;
     }
 
     @Override
@@ -51,6 +63,8 @@ public class Steig {
                 ", haltestellenId=" + haltestellenId +
                 ", linie=" + linie +
                 ", rbl=" + rbl +
+                ", reihenfolge=" + reihenfolge +
+                ", richtung=" + richtung +
                 '}';
     }
 }

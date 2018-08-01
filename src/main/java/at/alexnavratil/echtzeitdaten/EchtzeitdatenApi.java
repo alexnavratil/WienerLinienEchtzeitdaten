@@ -10,10 +10,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class EchtzeitdatenApi {
@@ -68,8 +66,10 @@ public class EchtzeitdatenApi {
                         Integer.parseInt(row.getField("STEIG_ID")),
                         Integer.parseInt(row.getField("FK_HALTESTELLEN_ID")),
                         linieIndexMap.get(Integer.parseInt(row.getField("FK_LINIEN_ID"))),
-                        Integer.parseInt(row.getField("RBL_NUMMER"))
-                );
+                        Integer.parseInt(row.getField("RBL_NUMMER")),
+                        Integer.parseInt(row.getField("REIHENFOLGE")),
+                        parseRichtung(row.getField("RICHTUNG")));
+                this.steigList.add(s);
                 if (steigHaltestellenIndexMap.containsKey(s.getHaltestellenId())) {
                     steigHaltestellenIndexMap.get(s.getHaltestellenId()).add(s);
                 } else {
@@ -122,6 +122,10 @@ public class EchtzeitdatenApi {
             default:
                 return null;
         }
+    }
+
+    private Richtung parseRichtung(String richtung) {
+        return richtung.equals("H") ? Richtung.H : Richtung.R;
     }
 
     public List<Haltestelle> listHaltestellen(){
