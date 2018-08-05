@@ -13,6 +13,7 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class EchtzeitdatenApi {
     private boolean readStaticData = false;
@@ -186,6 +187,34 @@ public class EchtzeitdatenApi {
                 throw new IOException("Unexpected response " + jsonBody.get("message").get("messageCode").as(Integer.class) + " " + jsonBody.get("message").get("value").as(String.class));
             }
         }
+    }
+
+    public List<Haltestelle> listEndpointsOfLine(int linienId) {
+        List<Haltestelle> haltestellenList = listHaltestellen().stream()
+                .filter(h -> h.getSteigList() != null)
+                .filter(h -> h.getSteigList().stream().anyMatch(steig -> steig.getLinie().getId() == linienId))
+                .collect(Collectors.toList());
+
+        List<Haltestelle> endpointList = new ArrayList<>(2);
+
+        final int max = haltestellenList.stream()
+                .filter(haltestelle -> haltestelle.getSteigList() != null)
+                .map(haltestelle -> haltestelle.getSteigList()
+                        .stream()
+                        .filter(steig -> steig.getLinie().getId() == linienId)
+                        .map(Steig::getReihenfolge)
+                        .max(Comparator.comparingInt(o -> o)).get())
+                .max(Comparator.comparingInt(o -> o)).get();
+
+        haltestellenList.stream()
+                .filter(haltestelle -> haltestelle.getSteigList() != null)
+                .filter(haltestelle -> haltestelle.getSteigList().stream()
+                        .filter(steig -> steig.getLinie().getId() == linienId)
+                        .anyMatch(steig -> steig.getReihenfolge() == 1 || steig.getReihenfolge() == max))
+                .distinct()
+                .forEach(endpointList::add);
+
+        return endpointList;
     }
 
     public void setSenderId(String senderId) {
