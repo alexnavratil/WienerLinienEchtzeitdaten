@@ -54,7 +54,7 @@ public static void main(String[] args) throws IOException {
     }
 ```
 
-### Asynchronous+
+### Asynchronous
 The same example as above, but with an asynchronous request:
 ```
 api.listAbfahrtszeitenAsync(rblList)
