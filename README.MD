@@ -18,6 +18,7 @@ dependencies {
 ```
 
 ## Example
+### Synchronous
 The following code lists the departure time in minutes from the station Palffygasse:
 ```
 public static void main(String[] args) throws IOException {
@@ -51,4 +52,21 @@ public static void main(String[] args) throws IOException {
            System.err.println("Station not found!");
        }
     }
+```
+
+### Asynchronous+
+The same example as above, but with an asynchronous request:
+```
+api.listAbfahrtszeitenAsync(rblList)
+    .onSuccess((data) -> {
+        data.forEach((key, value) -> {
+            value.stream().map(MonitorResponse::getDepartures).forEach(System.out::println);
+            System.out.println();
+        });
+        return null;
+    })
+    .onFailure((ex) -> {
+        ex.printStackTrace();
+        return null;
+    });
 ```

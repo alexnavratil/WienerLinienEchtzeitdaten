@@ -6,9 +6,7 @@ import com.jsoniter.any.Any;
 import de.siegmar.fastcsv.reader.CsvContainer;
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRow;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,6 +23,8 @@ public class EchtzeitdatenApi {
     private Map<Integer, List<Steig>> steigHaltestellenIndexMap = new HashMap<>();
 
     private String senderId = null;
+
+    private final OkHttpClient httpClient = new OkHttpClient();
 
     public EchtzeitdatenApi() {
     }
@@ -151,41 +151,70 @@ public class EchtzeitdatenApi {
     }
 
     public Map<Integer, List<MonitorResponse>> listAbfahrtszeiten(List<Integer> rblList) throws IOException {
+        Request request = createRealtimeDataRequest(rblList);
+
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+            return extractRealtimeData(response.body().string());
+        }
+    }
+
+    public RealtimeDataCallback listAbfahrtszeitenAsync(List<Integer> rblList) {
+        RealtimeDataCallback callback = new RealtimeDataCallback();
+        Request request = createRealtimeDataRequest(rblList);
+        httpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                callback.failureFunction.apply(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    callback.successFunction.apply(extractRealtimeData(response.body().string()));
+                } catch(IOException e) {
+                    callback.failureFunction.apply(e);
+                }
+            }
+        });
+        return callback;
+    }
+
+    private Request createRealtimeDataRequest(List<Integer> rblList) {
         if(senderId == null){
             throw new IllegalStateException("no senderId set");
         }
-        final OkHttpClient client = new OkHttpClient();
 
         StringBuilder rblQueryParam = new StringBuilder();
         rblList.forEach(num -> rblQueryParam.append("&rbl="+num));
 
-        Request request = new Request.Builder()
+        return new Request.Builder()
                 .url("http://www.wienerlinien.at/ogd_realtime/monitor?sender="+this.senderId+rblQueryParam.toString())
                 .build();
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
-            Map<String, Any> jsonBody = JsonIterator.deserialize(response.body().string()).asMap();
-            if(jsonBody.get("message").get("messageCode").as(Integer.class) == 1){
-                Map<Integer, List<MonitorResponse>> responseMap = new HashMap<>();
-                List<Any> monitorsList = jsonBody.get("data").get("monitors").asList();
-                monitorsList.forEach(monitor -> {
-                    final Integer currentRbl = monitor.get("locationStop").get("properties").get("attributes").get("rbl").as(Integer.class);
-                    final List<Any> lineList = monitor.get("lines").asList();
-                    final List<MonitorResponse> monitorResponseList = new ArrayList<>(lineList.size());
-                    lineList.forEach(line -> {
-                        final String lineName = line.get("name").as(String.class);
-                        final String towards = line.get("towards").as(String.class);
-                        final List<Any> jsonDepartureList = line.get("departures").get("departure").asList();
-                        final List<Integer> departureList = new ArrayList<>(jsonDepartureList.size());
-                        jsonDepartureList.forEach(departure -> departureList.add(departure.get("departureTime").get("countdown").as(Integer.class)));
-                        monitorResponseList.add(new MonitorResponse(lineName, towards, departureList));
-                    });
-                    responseMap.put(currentRbl, monitorResponseList);
+    }
+
+    private Map<Integer, List<MonitorResponse>> extractRealtimeData(String responseBody) throws IOException {
+        Map<String, Any> jsonBody = JsonIterator.deserialize(responseBody).asMap();
+        if(jsonBody.get("message").get("messageCode").as(Integer.class) == 1){
+            Map<Integer, List<MonitorResponse>> responseMap = new HashMap<>();
+            List<Any> monitorsList = jsonBody.get("data").get("monitors").asList();
+            monitorsList.forEach(monitor -> {
+                final Integer currentRbl = monitor.get("locationStop").get("properties").get("attributes").get("rbl").as(Integer.class);
+                final List<Any> lineList = monitor.get("lines").asList();
+                final List<MonitorResponse> monitorResponseList = new ArrayList<>(lineList.size());
+                lineList.forEach(line -> {
+                    final String lineName = line.get("name").as(String.class);
+                    final String towards = line.get("towards").as(String.class);
+                    final List<Any> jsonDepartureList = line.get("departures").get("departure").asList();
+                    final List<Integer> departureList = new ArrayList<>(jsonDepartureList.size());
+                    jsonDepartureList.forEach(departure -> departureList.add(departure.get("departureTime").get("countdown").as(Integer.class)));
+                    monitorResponseList.add(new MonitorResponse(lineName, towards, departureList));
                 });
-                return responseMap;
-            } else {
-                throw new IOException("Unexpected response " + jsonBody.get("message").get("messageCode").as(Integer.class) + " " + jsonBody.get("message").get("value").as(String.class));
-            }
+                responseMap.put(currentRbl, monitorResponseList);
+            });
+            return responseMap;
+        } else {
+            throw new IOException("Unexpected response " + jsonBody.get("message").get("messageCode").as(Integer.class) + " " + jsonBody.get("message").get("value").as(String.class));
         }
     }
 
