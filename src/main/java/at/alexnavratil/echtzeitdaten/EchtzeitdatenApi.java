@@ -207,7 +207,10 @@ public class EchtzeitdatenApi {
                     final String towards = line.get("towards").as(String.class);
                     final List<Any> jsonDepartureList = line.get("departures").get("departure").asList();
                     final List<Integer> departureList = new ArrayList<>(jsonDepartureList.size());
-                    jsonDepartureList.forEach(departure -> departureList.add(departure.get("departureTime").get("countdown").as(Integer.class)));
+                    jsonDepartureList
+                            .stream()
+                            .filter(departure -> departure.get("departureTime").keys().contains("countdown"))
+                            .forEach(departure -> departureList.add(departure.get("departureTime").get("countdown").as(Integer.class)));
                     monitorResponseList.add(new MonitorResponse(lineName, towards, departureList));
                 });
                 responseMap.put(currentRbl, monitorResponseList);
