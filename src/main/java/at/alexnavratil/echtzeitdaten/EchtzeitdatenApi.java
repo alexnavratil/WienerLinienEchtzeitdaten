@@ -213,7 +213,12 @@ public class EchtzeitdatenApi {
                             .forEach(departure -> departureList.add(departure.get("departureTime").get("countdown").as(Integer.class)));
                     monitorResponseList.add(new MonitorResponse(lineName, towards, departureList));
                 });
-                responseMap.put(currentRbl, monitorResponseList);
+
+                if(responseMap.containsKey(currentRbl)) {
+                    responseMap.get(currentRbl).addAll(monitorResponseList);
+                } else {
+                    responseMap.put(currentRbl, monitorResponseList);
+                }
             });
             return responseMap;
         } else {
